@@ -1,0 +1,10 @@
+src/value.cpp
+
+tests/main.cpp
+tests/value_conversions.cpp
+tests/value_constructors.cpp
+tests/value_type_checker.cpp
+tests/value_printer.cpp
+tests/value_copy_move.cpp
+tests/value_arrays.cpp
+tests/value_objects.cpp
