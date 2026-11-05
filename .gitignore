@@ -11,3 +11,15 @@ build/
 # IDE files
 .vscode/
 .idea/
+
+# Node.js dependencies
+node_modules/
+
+# VitePress generated files
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
