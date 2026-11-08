@@ -8,3 +8,4 @@ tests/value_printer.cpp
 tests/value_copy_move.cpp
 tests/value_arrays.cpp
 tests/value_objects.cpp
+tests/value_references.cpp

@@ -2,55 +2,50 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
   title: "DDL",
-  description:
-    "A lightweight C++17 library for storing and working with dynamic data.",
+  description: "Documentation for DDL — Dynamic Data Library for C++.",
   base: "/ddl/",
 
   themeConfig: {
+    siteTitle: "DDL",
+
     nav: [
-      { text: "Home", link: "/" },
-      { text: "Guide", link: "/guide/getting-started" },
-      { text: "API Reference", link: "/api/" },
+      {
+        text: "Guide",
+        link: "/guide/introduction",
+      },
     ],
 
-    sidebar: {
-      "/guide/": [
-        {
-          text: "Introduction",
-          items: [
-            { text: "Getting Started", link: "/guide/getting-started" },
-            { text: "Quick Start", link: "/guide/quick-start" },
-          ],
-        },
-        {
-          text: "Core Concepts",
-          items: [
-            { text: "Values and Types", link: "/guide/values-and-types" },
-            { text: "Type Conversions", link: "/guide/type-conversions" },
-            { text: "Arrays and Objects", link: "/guide/arrays-and-objects" },
-          ],
-        },
-      ],
-
-      "/api/": [
-        {
-          text: "API Reference",
-          items: [
-            { text: "Overview", link: "/api/" },
-            { text: "Value Class", link: "/api/value" },
-            { text: "Stream Insertion Operator", link: "/api/stream-operator" },
-          ],
-        },
-      ],
+    search: {
+      provider: "local",
     },
 
     socialLinks: [
       { icon: "github", link: "https://github.com/amanjkhan21/ddl" },
     ],
 
+    sidebar: {
+      "/guide/": [
+        {
+          text: "Guide",
+          items: [
+            { text: "Introduction", link: "/guide/introduction" },
+            { text: "Installation", link: "/guide/installation" },
+            { text: "Quick Start", link: "/guide/quick-start" },
+            { text: "Supported Types", link: "/guide/types" },
+            { text: "Type Checking", link: "/guide/type-checking" },
+            { text: "Conversions", link: "/guide/conversions" },
+            { text: "References", link: "/guide/references" },
+            { text: "Arrays and Objects", link: "/guide/collections" },
+            { text: "Printing", link: "/guide/printing" },
+            { text: "Exceptions", link: "/guide/exceptions" },
+          ],
+        },
+      ],
+    },
+
     footer: {
-      message: "Released under the MIT License.",
-      copyright: "Copyright © 2026 DDL Contributors",
+      message: "DDL — Dynamic Data Library for C++",
+      copyright: "Copyright © Aman Khan",
     },
   },
 });

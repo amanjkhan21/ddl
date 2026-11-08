@@ -3,38 +3,32 @@ layout: home
 
 hero:
   name: DDL
-  text: Dynamic Data Library
-  tagline: A lightweight C++17 library for storing and working with dynamic data.
+  text: Dynamic Data Library for C++
+  tagline: A lightweight, header-only C++17 library for storing and working with dynamically typed data.
   actions:
     - theme: brand
       text: Get Started
-      link: /guide/getting-started
+      link: /guide/introduction
     - theme: alt
-      text: View on GitHub
-      link: https://github.com/amanjkhan21/ddl
+      text: View Features
+      link: /guide/types
 
 features:
-  - icon: 🧩
-    title: Flexible Data Types
-    details: Store null values, booleans, numbers, characters, strings, arrays, and objects in one unified value type.
+  - title: Dynamic Values
+    details: Store null, boolean, numeric, character, string, array, and object values in a single type-safe container.
 
-  - icon: 🌳
-    title: Nested Structures
-    details: Build complex data structures with arrays and objects nested inside one another.
+  - title: Type Operations
+    details: Check stored types, convert values, and access stored data directly through a simple API.
 
-  - icon: 🔍
-    title: Simple Type Checking
-    details: Check the stored type using a straightforward is<T>() interface.
+  - title: Nested Collections
+    details: Create arrays and objects containing mixed types and arbitrarily nested data structures.
 
-  - icon: 🔄
-    title: Easy Conversions
-    details: Convert stored values using as<T>(), with clear conversion rules and exceptions.
+  - title: Reference Access
+    details: Retrieve mutable or constant references to stored values without unnecessary copying.
 
-  - icon: 📦
-    title: Single-Header Distribution
-    details: Use the library by including one header file. No separate build step is required.
+  - title: Recursive Printing
+    details: Print primitive values, arrays, and objects recursively using the stream insertion operator.
 
-  - icon: ⚡
-    title: Modern C++17
-    details: Built with standard C++17 features and no external dependencies.
+  - title: Header-only
+    details: Integrate DDL into your C++17 project by including a single header.
 ---

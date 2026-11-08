@@ -1,111 +1,204 @@
 # Quick Start
 
-This guide introduces the basic features of DDL through a few examples.
+This guide walks through the basics of using DDL, including creating values, checking their types, converting them, accessing stored values by reference, and working with arrays and objects.
+
+## Include DDL
+
+Start by including the DDL header and the standard library headers needed for the example.
+
+```cpp
+#include "ddl.h"
+
+#include <iostream>
+#include <string>
+```
 
 ## Creating Values
 
-DDL provides a unified `ddl::value` type that can store several different data types.
+Use `ddl::value` to store different types of data.
 
 ```cpp
-ddl::value a = 42;
-ddl::value b = "Hello, DDL!";
-ddl::value c = true;
-ddl::value d = nullptr;
+ddl::value number = 42;
+ddl::value text = "Hello, DDL!";
+ddl::value flag = true;
+ddl::value empty = nullptr;
+```
+
+A `ddl::value` can also be reassigned to hold a different supported type:
+
+```cpp
+ddl::value data = 100;
+
+data = "Now I'm a string";
+data = false;
 ```
 
 ## Checking Types
 
-Use `is<T>()` to check which type a value currently stores.
+Use `is<T>()` to check the exact type currently stored in a value.
 
 ```cpp
 ddl::value data = 42;
 
 if (data.is<std::int32_t>()) {
-    std::cout << "The value stores an int32_t.\n";
+    std::cout << "Data stores an integer\n";
 }
 ```
 
 ## Converting Values
 
-Use `as<T>()` to retrieve a value in a requested type.
+Use `as<T>()` to retrieve a value in a supported type.
 
 ```cpp
 ddl::value data = 42;
 
 int number = data.as<int>();
-std::string text = data.as<std::string>();
+double decimal = data.as<double>();
+
+std::cout << number << '\n';
+std::cout << decimal << '\n';
 ```
 
-Conversions follow DDL's documented conversion rules. Unsupported conversions throw exceptions.
+Conversions that are not supported throw `std::invalid_argument`. Numeric conversions that exceed the destination type's range throw `std::out_of_range`.
+
+## Accessing Values by Reference
+
+Use `ref<T>()` to access the value stored inside a `ddl::value` through a reference. Unlike `as<T>()`, which returns a value, `ref<T>()` provides direct access to the stored object.
+
+```cpp
+ddl::value data = 42;
+
+std::int32_t& number = data.ref<std::int32_t>();
+
+number = 100;
+
+std::cout << data << '\n'; // 100
+```
+
+You can also use a const reference when you only need to read the stored value:
+
+```cpp
+const ddl::value data = "Hello, DDL!";
+
+const std::string& text = data.ref<std::string>();
+
+std::cout << text << '\n';
+```
+
+To obtain a reference to the entire `ddl::value` itself, use `ref<ddl::value>()`:
+
+```cpp
+ddl::value data = 42;
+
+ddl::value& value = data.ref<ddl::value>();
+
+value = "Updated value";
+
+std::cout << data << '\n';
+```
+
+The requested type must match the exact stored type. If it does not, `ref<T>()` throws `std::invalid_argument`.
+
+References can only be obtained from lvalue values, preventing references from being taken from temporary objects.
 
 ## Working with Arrays
 
-Unlike regular C++ arrays or vectors, a DDL array can contain values of different types.
+`ddl::array` is a dynamic array that stores `ddl::value` elements.
 
 ```cpp
 ddl::array values = {
     42,
     "Hello",
     true,
-    nullptr,
-    ddl::array{10, 20, 30}
+    nullptr
 };
 
 ddl::value data = values;
+
+std::cout << data << '\n';
 ```
 
-Each element is a `ddl::value`, so arrays can contain different types and even other arrays or objects.
-
-You can retrieve an array using `as<ddl::array>()`.
+Arrays can contain other arrays and objects, allowing nested data structures.
 
 ## Working with Objects
 
-Objects store key-value pairs using string keys.
+`ddl::object` stores key-value pairs with string keys and `ddl::value` values.
 
 ```cpp
 ddl::object person = {
     {"name", "Alice"},
-    {"age", 20},
-    {"isStudent", true}
+    {"age", 25},
+    {"active", true}
 };
 
 ddl::value data = person;
+
+std::cout << data << '\n';
 ```
 
-Values inside objects can themselves be arrays or other objects.
+You can access an object's elements using their keys:
+
+```cpp
+std::string name = data.as<ddl::object>().at("name").as<std::string>();
+
+std::cout << name << '\n';
+```
 
 ## Printing Values
 
-Use the stream insertion operator to print a value.
+Use `std::cout` to print values directly. DDL supports primitive values, arrays, and objects through the stream insertion operator.
 
 ```cpp
 ddl::value data = ddl::object{
-    {"name", "Alice"},
-    {"age", 20},
-    {"skills", ddl::array{"C++", "Python"}}
+    {"message", "Hello, DDL!"},
+    {"success", true}
 };
 
 std::cout << data << '\n';
-
 ```
 
-Output:
+## Complete Example
 
-```text
-{
-  "skills": [
-    C++,
-    Python
-  ],
-  "age": 20,
-  "name": Alice
+```cpp
+#include "ddl.h"
+
+#include <iostream>
+#include <string>
+
+int main() {
+    // Create a value
+    ddl::value data = 42;
+
+    // Check its type
+    if (data.is<std::int32_t>()) {
+        std::cout << "Integer: " << data.as<int>() << '\n';
+    }
+
+    // Access and modify the stored value by reference
+    std::int32_t& number = data.ref<std::int32_t>();
+    number = 100;
+
+    std::cout << "Updated integer: " << data << '\n';
+
+    // Reassign it
+    data = "Hello, DDL!";
+    std::cout << "String: " << data.as<std::string>() << '\n';
+
+    // Create and print an array
+    ddl::array values = {1, "two", true};
+    std::cout << "Array: " << values << '\n';
+
+    // Create and print an object
+    ddl::object person = {
+        {"name", "Alice"},
+        {"age", 25}
+    };
+    std::cout << "Object: " << person << '\n';
+
+    return 0;
 }
 ```
 
-DDL recursively formats arrays and objects, making nested data easier to read.
+This example covers the basic workflow of creating, checking, converting, referencing, and printing DDL values.
 
-Note: Object property order is unspecified because DDL uses `std::unordered_map`.
-
-## What's Next?
-
-Explore [Values and Types](/guide/values-and-types) to understand the data model in more detail.
+Continue to [Supported Types](./types) to see all types that `ddl::value` can store.

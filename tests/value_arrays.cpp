@@ -1,17 +1,41 @@
 #include <cassert>
 #include <cstdint>
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <ddl/value.hpp>
 
-using ddl::value;
-using ddl::array;
+namespace {
 
-// ==================== Array Constructors ====================
+using ddl::array;
+using ddl::value;
+
+template <typename Exception, typename Callable>
+void assert_throws(Callable&& callable) {
+    bool exception_thrown = false;
+
+    try {
+        std::forward<Callable>(callable)();
+    } catch (const Exception&) {
+        exception_thrown = true;
+    }
+
+    assert(exception_thrown);
+}
+
+void assert_prints(const value& input, const std::string& expected) {
+    std::ostringstream output;
+    output << input;
+
+    assert(output.str() == expected);
+}
+
+// -----------------------------------------------------------------------------
+// Array constructors
+// -----------------------------------------------------------------------------
 
 void test_array_constructors() {
     value empty = array{};
@@ -25,9 +49,18 @@ void test_array_constructors() {
     assert(empty.as<array>().empty());
     assert(numbers.as<array>().size() == 3);
     assert(mixed.as<array>().size() == 5);
+
+    // Arrays containing different value types.
+    assert(mixed.as<array>()[0].is<std::int32_t>());
+    assert(mixed.as<array>()[1].is<std::string>());
+    assert(mixed.as<array>()[2].is<char>());
+    assert(mixed.as<array>()[3].is<bool>());
+    assert(mixed.as<array>()[4].is<double>());
 }
 
-// ==================== Array Retrieval ====================
+// -----------------------------------------------------------------------------
+// Array retrieval
+// -----------------------------------------------------------------------------
 
 void test_array_retrieval() {
     value v = array{1, 2, 3};
@@ -39,13 +72,22 @@ void test_array_retrieval() {
     assert(items[1].as<std::int32_t>() == 2);
     assert(items[2].as<std::int32_t>() == 3);
 
-    // Verify the std::vector alias works too.
+    // The std::vector alias works too.
     std::vector<value> vector_items = v.as<std::vector<value>>();
 
     assert(vector_items.size() == 3);
+    assert(vector_items[0].as<std::int32_t>() == 1);
+
+    // Retrieving an empty array.
+    value empty = array{};
+    array empty_items = empty.as<array>();
+
+    assert(empty_items.empty());
 }
 
-// ==================== Mixed-Type Arrays ====================
+// -----------------------------------------------------------------------------
+// Mixed-type arrays
+// -----------------------------------------------------------------------------
 
 void test_mixed_type_arrays() {
     value v = array{1, "Hello", 'a', false, 3.14};
@@ -59,7 +101,9 @@ void test_mixed_type_arrays() {
     assert(items[4].as<double>() == 3.14);
 }
 
-// ==================== Nested Arrays ====================
+// -----------------------------------------------------------------------------
+// Nested arrays
+// -----------------------------------------------------------------------------
 
 void test_nested_arrays() {
     value v = array{
@@ -77,7 +121,7 @@ void test_nested_arrays() {
     assert(nested[1].as<std::int32_t>() == 20);
     assert(nested[2].as<std::int32_t>() == 30);
 
-    // Test multiple nesting levels.
+    // Multiple nesting levels.
     value deeply_nested = array{
         array{
             array{100, 200}
@@ -88,11 +132,25 @@ void test_nested_arrays() {
     array level2 = level1[0].as<array>();
     array level3 = level2[0].as<array>();
 
+    assert(level3.size() == 2);
     assert(level3[0].as<std::int32_t>() == 100);
     assert(level3[1].as<std::int32_t>() == 200);
+
+    // Empty nested arrays.
+    value empty_nested = array{
+        array{},
+        array{1, 2}
+    };
+
+    array empty_nested_items = empty_nested.as<array>();
+
+    assert(empty_nested_items[0].as<array>().empty());
+    assert(empty_nested_items[1].as<array>().size() == 2);
 }
 
-// ==================== Array Copy Behavior ====================
+// -----------------------------------------------------------------------------
+// Array copy behavior
+// -----------------------------------------------------------------------------
 
 void test_array_copy() {
     value original = array{1, 2, 3};
@@ -103,118 +161,173 @@ void test_array_copy() {
 
     copy_items[0] = 999;
 
+    // Modifying a retrieved copy does not modify stored data.
     assert(original_items[0].as<std::int32_t>() == 1);
     assert(copy_items[0].as<std::int32_t>() == 999);
-
-    // Modifying a retrieved array must not modify stored data.
     assert(copy.as<array>()[0].as<std::int32_t>() == 1);
 
     // Copy assignment.
     value assigned;
     assigned = original;
 
+    assert(assigned.is<array>());
     assert(assigned.as<array>()[0].as<std::int32_t>() == 1);
+
+    // Modifying the assigned value does not affect the original.
+    assigned.ref<array>()[0] = value(100);
+
+    assert(assigned.ref<array>()[0].as<std::int32_t>() == 100);
+    assert(original.ref<array>()[0].as<std::int32_t>() == 1);
 }
 
-// ==================== Array Conversion Rejection ====================
+// -----------------------------------------------------------------------------
+// Array reference behavior
+// -----------------------------------------------------------------------------
 
-void test_array_conversion_rejection() {
+void test_array_references() {
+    value v = array{1, 2, 3};
+
+    // Mutable reference.
+    array& items = v.ref<array>();
+
+    assert(items.size() == 3);
+
+    items[0] = value(100);
+
+    assert(v.ref<array>()[0].as<std::int32_t>() == 100);
+
+    // Const reference.
+    const value& const_v = v;
+    const array& const_items = const_v.ref<array>();
+
+    assert(const_items.size() == 3);
+    assert(const_items[0].as<std::int32_t>() == 100);
+
+    // Nested array references.
+    value nested = array{
+        array{10, 20},
+        array{30, 40}
+    };
+
+    array& outer = nested.ref<array>();
+    array& inner = outer[0].ref<array>();
+
+    inner[0] = value(999);
+
+    assert(
+        nested.ref<array>()[0].ref<array>()[0]
+            .as<std::int32_t>() == 999
+    );
+}
+
+// -----------------------------------------------------------------------------
+// Array conversions
+// -----------------------------------------------------------------------------
+
+void test_array_conversion() {
     value arr = array{1, 2, 3};
 
-    // Array to scalar conversions must throw.
-    bool threw = false;
+    // Array to bool conversion.
+    assert(arr.as<bool>() == true);
 
-    try {
-        arr.as<bool>();
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw);
-
-    threw = false;
-    try {
+    // Array to other scalar conversions must throw.
+    assert_throws<std::invalid_argument>([&]() {
         arr.as<std::int32_t>();
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw);
+    });
 
-    threw = false;
-    try {
+    assert_throws<std::invalid_argument>([&]() {
+        arr.as<std::int64_t>();
+    });
+
+    assert_throws<std::invalid_argument>([&]() {
+        arr.as<float>();
+    });
+
+    assert_throws<std::invalid_argument>([&]() {
         arr.as<double>();
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw);
+    });
 
-    threw = false;
-    try {
+    assert_throws<std::invalid_argument>([&]() {
+        arr.as<char>();
+    });
+
+    assert_throws<std::invalid_argument>([&]() {
         arr.as<std::string>();
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw);
+    });
 
     // Scalar to array conversion must throw.
     value scalar = 42;
 
-    threw = false;
-    try {
+    assert_throws<std::invalid_argument>([&]() {
         scalar.as<array>();
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw);
+    });
 
-    // Empty arrays must not participate in truthiness.
+    // Object to array conversion must throw.
+    value object_value = ddl::object{};
+
+    assert_throws<std::invalid_argument>([&]() {
+        object_value.as<array>();
+    });
+
+    // Empty arrays are truthy.
     value empty = array{};
 
-    threw = false;
-    try {
-        empty.as<bool>();
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw);
+    assert(empty.as<bool>() == true);
 }
 
-// ==================== Array Printing ====================
+// -----------------------------------------------------------------------------
+// Array printing
+// -----------------------------------------------------------------------------
 
 void test_array_printing() {
     value empty = array{};
     value numbers = array{1, 2, 3};
     value mixed = array{1, "Hello", true};
+
     value nested = array{
         1,
         array{10, 20},
         "Hello"
     };
 
-    std::ostringstream output;
+    assert_prints(empty, "[]");
 
-    output << empty;
-    assert(output.str() == "[]");
+    assert_prints(
+        numbers,
+        "[\n"
+        "  1,\n"
+        "  2,\n"
+        "  3\n"
+        "]"
+    );
 
-    output.str("");
-    output.clear();
+    assert_prints(
+        mixed,
+        "[\n"
+        "  1,\n"
+        "  \"Hello\",\n"
+        "  true\n"
+        "]"
+    );
 
-    output << numbers;
-    assert(output.str() == "[\n  1,\n  2,\n  3\n]");
-
-    output.str("");
-    output.clear();
-
-    output << mixed;
-    assert(output.str() == "[\n  1,\n  Hello,\n  true\n]");
-
-    output.str("");
-    output.clear();
-
-    output << nested;
-    assert(output.str() == "[\n  1,\n  [\n    10,\n    20\n  ],\n  Hello\n]");
+    assert_prints(
+        nested,
+        "[\n"
+        "  1,\n"
+        "  [\n"
+        "    10,\n"
+        "    20\n"
+        "  ],\n"
+        "  \"Hello\"\n"
+        "]"
+    );
 }
 
-// ==================== Main Test Function ====================
+} // namespace
+
+// -----------------------------------------------------------------------------
+// Main array test runner
+// -----------------------------------------------------------------------------
 
 void test_value_arrays() {
     test_array_constructors();
@@ -222,6 +335,7 @@ void test_value_arrays() {
     test_mixed_type_arrays();
     test_nested_arrays();
     test_array_copy();
-    test_array_conversion_rejection();
+    test_array_references();
+    test_array_conversion();
     test_array_printing();
 }
